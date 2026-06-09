@@ -24,7 +24,7 @@
 
 ### 3. 修改「可疑登录期间的身份验证」为「无效的」
 
-<img width="1694" height="367" alt="image" src="https://github.com/user-attachments/assets/f331a64b-e94f-4663-8530-67e438264302" />
+<img width="1431" height="327" alt="image" src="https://github.com/user-attachments/assets/05039890-8cf9-4d04-a334-189a1daf11ba" />
 
 ---
 
