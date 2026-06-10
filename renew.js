@@ -91,6 +91,21 @@ function addDaysStr(dateStr, days) {
   return d.toISOString().slice(0, 10);
 }
 
+// 格式化小时数：≥10h→"89h"  ≥1h→"20.5h"  <1h→"45m"
+function fmtHours(h) {
+  if (h === null || h === undefined) return '?';
+  if (h >= 10) return Math.round(h) + 'h';
+  if (h >= 1) return h.toFixed(1) + 'h';
+  return Math.round(h * 60) + 'm';
+}
+
+// 格式化分钟数：→"2h3m" 或 "45m"
+function fmtMinutes(min) {
+  if (min === null || min === undefined) return '?';
+  var h = Math.floor(min / 60), m = min % 60;
+  return h > 0 ? h + 'h' + m + 'm' : m + 'm';
+}
+
 // ── Telegram 通知（带每日去重）──
 
 async function sendTGOnce(statusIcon, statusText, extra, imagePath) {
@@ -293,9 +308,9 @@ async function tryRenew(page, beforeMins, thresholdHours) {
     await page.screenshot({ path: 'success.png' });
 
     var afterMins = await parseRemainingMinutes(page);
-    var beforeH = beforeMins ? (beforeMins / 60).toFixed(1) : '?';
-    var afterH = afterMins ? (afterMins / 60).toFixed(1) : '?';
-    var timeInfo = '续签前 ' + beforeH + 'h → 续签后 ' + afterH + 'h';
+    var beforeH = beforeMins ? fmtHours(beforeMins / 60) : '?';
+    var afterH = afterMins ? fmtHours(afterMins / 60) : '?';
+    var timeInfo = '续签前 ' + beforeH + ' → 续签后 ' + afterH;
     console.log('⏱️ ' + timeInfo);
 
     // 动态计算下次检查：用续期后剩余时间 - 阈值，算出几天后再查
@@ -304,7 +319,7 @@ async function tryRenew(page, beforeMins, thresholdHours) {
       var newH = afterMins / 60;
       var calcDays = Math.ceil((newH - thresholdHours) / 24);
       nextDays = Math.max(1, calcDays);
-      console.log('📐 续期后剩余 ' + newH.toFixed(1) + 'h，阈值 ' + thresholdHours + 'h，约 ' + nextDays + ' 天后复查');
+      console.log('📐 续期后剩余 ' + fmtHours(newH) + '，阈值 ' + thresholdHours + 'h，约 ' + nextDays + ' 天后复查');
     }
 
     var status = loadStatus();
@@ -396,7 +411,7 @@ async function tryRenew(page, beforeMins, thresholdHours) {
         var nowMin = getNowJSTMinutes();
         var waitMin = extendInfo.nextMinutes - nowMin;
         if (waitMin > 0) {
-          await setTodayAndExit('还需 ' + waitMin + ' 分钟到可续期时间');
+          await setTodayAndExit('还需 ' + fmtMinutes(waitMin) + ' 后可续期');
         }
       }
 
@@ -406,8 +421,8 @@ async function tryRenew(page, beforeMins, thresholdHours) {
         if (h > thresholdHours) {
           var hoursToGo = h - thresholdHours;
           var days = Math.max(1, Math.ceil(hoursToGo / 24));
-          console.log('🔭 剩余 ' + h.toFixed(1) + 'h > 阈值 ' + thresholdHours + 'h，预约 ' + days + ' 天后');
-          await sendTGOnce('🔭', '探测跳过', '剩余 ' + h.toFixed(1) + 'h，预约 ' + days + ' 天后');
+          console.log('🔭 剩余 ' + fmtHours(h) + ' > 阈值 ' + thresholdHours + 'h，预约 ' + days + ' 天后');
+          await sendTGOnce('🔭', '探测跳过', '剩余 ' + fmtHours(h) + '，预约 ' + days + ' 天后查');
           updateNextCheckDate(days, '等待进入可续期窗口');
           process.exit(0);
         }
@@ -420,7 +435,7 @@ async function tryRenew(page, beforeMins, thresholdHours) {
 
     // ── 可续期窗口 ──
     if (DELAY_MS > 0) {
-      console.log('⏳ T 延迟 ' + (DELAY_MS / 60000).toFixed(1) + ' 分钟...');
+      console.log('⏳ T 延迟 ' + fmtMinutes(Math.round(DELAY_MS / 60000)) + '...');
       await new Promise(function(r) { setTimeout(r, DELAY_MS); });
     }
 
