@@ -6,9 +6,15 @@ on:
     - cron: '0 6 * * *'  # JST 15:00
     - cron: '0 14 * * *' # JST 23:00
   workflow_dispatch:
+    inputs:
+      force:
+        description: '强制续期，跳过预检'
+        default: false
+        required: false
+        type: boolean
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   setup:
@@ -51,8 +57,12 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Cache state.json
+        uses: actions/cache@v4
         with:
-          fetch-depth: 0
+          path: status.json
+          key: xserver-state-v1
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -98,6 +108,7 @@ jobs:
           PROXY_URL: ${{ secrets.PROXY_URL }}
           T: ${{ secrets.T }}
           GITHUB_EVENT_NAME: ${{ github.event_name }}
+          FORCE: ${{ inputs.force || false }}
         run: node renew.js
 
       - name: Upload Screenshots
@@ -107,15 +118,3 @@ jobs:
           name: screenshots-${{ matrix.account_index }}
           path: "*.png"
           retention-days: 5
-
-      - name: Persist status.json
-        if: always()
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git pull --rebase origin main || echo "No remote changes"
-          if [ -f status.json ]; then
-            git add status.json
-            git commit -m "chore: Update status.json for ${{ matrix.account_index }} [skip ci]" || echo "No changes"
-            git push
-          fi

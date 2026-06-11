@@ -23,3 +23,6 @@ __pycache__/
 Xserver_G_Multi_Renew_Project_Summary.md
 Xserver_G_Multi_Renew_Archive_Log.md
 Xserver_G_Multi_Renew_Project_Supplements.md
+
+# 4. 续期状态（含账号信息，不应公开）
+status.json
